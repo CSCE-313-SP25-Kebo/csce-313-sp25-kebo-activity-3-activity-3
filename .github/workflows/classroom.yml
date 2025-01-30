@@ -1,0 +1,52 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Compilation
+      id: compilation
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Compilation
+        setup-command: make test > ./.gradefile
+        command: grep "One" .gradefile
+        timeout: 2
+        max-score: 10
+    - name: Correct output for child process exiting normally - ./main -n 0
+      id: correct-output-for-child-process-exiting-normally-main-n-0
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Correct output for child process exiting normally - ./main -n 0
+        setup-command: ''
+        command: grep "One" .gradefile
+        timeout: 2
+        max-score: 20
+    - name: Correct output for child process exiting from a termination - ./main -n
+        1
+      id: correct-output-for-child-process-exiting-from-a-termination-main-n-1
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Correct output for child process exiting from a termination - ./main
+          -n 1
+        setup-command: ''
+        command: grep "Three" .gradefile
+        timeout: 2
+        max-score: 20
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        COMPILATION_RESULTS: "${{steps.compilation.outputs.result}}"
+        CORRECT-OUTPUT-FOR-CHILD-PROCESS-EXITING-NORMALLY-MAIN-N-0_RESULTS: "${{steps.correct-output-for-child-process-exiting-normally-main-n-0.outputs.result}}"
+        CORRECT-OUTPUT-FOR-CHILD-PROCESS-EXITING-FROM-A-TERMINATION-MAIN-N-1_RESULTS: "${{steps.correct-output-for-child-process-exiting-from-a-termination-main-n-1.outputs.result}}"
+      with:
+        runners: compilation,correct-output-for-child-process-exiting-normally-main-n-0,correct-output-for-child-process-exiting-from-a-termination-main-n-1
